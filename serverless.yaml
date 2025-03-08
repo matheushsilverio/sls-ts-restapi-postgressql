@@ -1,0 +1,74 @@
+service: sls-ts-restapi-postgressql
+frameworkVersion: '3'
+
+provider:
+  name: aws
+  runtime: 'nodejs18.x'
+  stage: ${opt:stage, 'dev'}
+  region: ${opt:region, 'us-east-1'}
+
+  stackTags:
+    SERVICE_NAME: 'sls-ts-restapi-postgressql'
+
+  environment:
+    STAGE: ${self:provider.stage}
+
+functions:
+  createOrder:
+    handler: src/use-cases/create-order/controller.handler
+    events:
+      - http:
+          path: /orders
+          method: post
+          cors: true
+  updateOrderStatus:
+    handler: src/use-cases/update-order-status/controller.handler
+    events:
+      - http:
+          path: /orders/{orderId}
+          method: put
+          cors: true
+  getOrder:
+    handler: src/use-cases/get-order/controller.handler
+    events:
+      - http:
+          path: /orders/{orderId}
+          method: get
+          cors: true
+  getUserOrders:
+    handler: src/use-cases/get-user-orders/controller.handler
+    events:
+      - http:
+          path: /users/{userId}/orders
+          method: get
+          cors: true
+  deleteOrder:
+    handler: src/use-cases/delete-order/controller.handler
+    events:
+      - http:
+          path: /orders/{orderId}
+          method: delete
+          cors: true
+
+package:
+  individually: true
+  exclude:
+    - node_modules/**
+
+custom:
+  esbuild:
+    bundle: true
+    minify: false
+    sourcemap: true
+    exclude:
+      - aws-sdk
+    target: 'node18'
+    platform: 'node'
+    concurrency: 10
+  dotenv:
+    basePath: .env
+
+plugins:
+  - serverless-esbuild
+  - serverless-offline
+  - serverless-plugin-resource-tagging
